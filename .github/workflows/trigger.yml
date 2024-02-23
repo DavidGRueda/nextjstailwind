@@ -1,0 +1,17 @@
+name: auto - main cicd workflow
+
+on:
+  workflow_dispatch:
+
+jobs:
+  deploy-dev:
+    uses: ./.github/workflows/main.yml
+    with:
+      aws-region: eu-west-3
+      aws-s3-bucket-name: davidruedapoc
+    secrets:
+      google-analytics-key: ${{ secrets.GOOGLE_ANALYTICS_KEY }}
+      cookiebot-id: ${{ secrets.COOKIEBOT_ID }}
+      aws-cloudfront-distribution-id: ${{ secrets.AWS_CLOUDFRONT_DISTRIBUTION_ID }}
+      aws-key: ${{ secrets.AWS_KEY_ID }}
+      aws-secret: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
