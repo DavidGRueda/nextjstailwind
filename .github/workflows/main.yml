@@ -1,0 +1,60 @@
+name: lib - build and deploy on s3
+
+on:
+  workflow_call:
+    inputs:
+      aws-region:
+        required: true
+        type: string
+      aws-s3-bucket-name:
+        required: true
+        type: string
+
+    secrets:
+      aws-cloudfront-distribution-id:
+        required: true
+      google-analytics-key:
+        required: true
+      cookiebot-id:
+        required: true
+      aws-key:
+        required: true
+      aws-secret:
+        required: true
+
+jobs:
+  build-and-deploy-s3:
+    runs-on: ubuntu-latest
+    steps:
+      - name: checkout code
+        uses: actions/checkout@v3
+
+      - name: setup node
+        uses: actions/setup-node@v3
+        with:
+          node-version: 20.x
+
+      - name: install deps
+        run: npm i
+
+      - name: create env file with config
+        run: |
+          touch .env
+          echo NEXT_PUBLIC_GOOGLE_ANALYTICS_ID=${{ secrets.google-analytics-key }} >> .env
+          echo NEXT_PUBLIC_COOKIEBOT_ID=${{ secrets.cookiebot-id }} >> .env
+
+      - name: build app
+        run: npm run build
+
+      - name: upload to s3 and refresh cloudfront
+        uses: reggionick/s3-deploy@v4
+        with:
+          folder: out
+          bucket: ${{ inputs.aws-s3-bucket-name }}
+          bucket-region: ${{ inputs.aws-region }}
+          delete-removed: true
+          dist-id: ${{ secrets.aws-cloudfront-distribution-id }}
+          invalidation: / *
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.aws-key }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.aws-secret }}
